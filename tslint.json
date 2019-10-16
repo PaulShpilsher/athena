@@ -5,6 +5,7 @@
     ],
     "jsRules": {},
     "rules": {
+        "no-console": false,
         "trailing-comma": [ false ],
         "arrow-return-shorthand": true,
         "callable-types": true,
@@ -46,6 +47,7 @@
           true,
           "ignore-params"
         ],
+        "arrow-parens": false,
         "no-misused-new": true,
         "no-non-null-assertion": true,
         "no-shadowed-variable": true,
@@ -102,5 +104,8 @@
           "kebab-case"
         ]
     },
-    "rulesDirectory": []
+    "rulesDirectory": [],
+    "linterOptions": {
+        "exclude": ["node_modules/**", "build/**", "e2e/**"]
+      }
 }

@@ -1,14 +1,18 @@
 {
+    "compileOnSave": false,
     "compilerOptions": {
-        "module": "commonjs",
-        "esModuleInterop": true,
-        "moduleResolution": "node",
-
-        "target": "esnext",
-        "sourceMap": true,
-        
         "outDir": "./build",
-        "baseUrl": "."
+        "baseUrl": ".",
+        "module": "commonjs",
+        "target": "esnext",
+        "allowJs": true,
+        "sourceMap": true,
+        "moduleResolution": "node",
+        "esModuleInterop": true,
+        "noImplicitAny": true,
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "strictNullChecks": true,
     },
     "include": [
       "src/**/*.ts"
