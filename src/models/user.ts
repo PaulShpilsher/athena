@@ -1,32 +1,26 @@
-import bcrypt from 'bcrypt';
+import { NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import mongoose, { Schema, SchemaDefinition } from 'mongoose';
+import { Document, Schema, Model, model } from 'mongoose';
+import { bcryptCompare, bcryptHash } from '../utils/bcrypt-helpers';
 
-const salt = process.env.BCRYPT_SALT as string;
 
 const roles = ['user', 'admin', 'guest'];
 
-const schema = {
-    firstName: {
-        type: String,
-        required: true,
-        minLength: 2,
-        maxlength: 128,
-        trim: true
-    },
-    lastName: {
-        type: String,
-        required: true,
-        minLength: 2,
-        maxlength: 128,
-        trim: true
-    },
+export interface IUser extends Document {
+    email: string;
+    password: string;
+    username: string;
+    role: string;
+}
+
+const userSchema = new Schema({
     email: {
         type: String,
+        match: /^\S+@\S+\.\S+$/,
         required: true,
         unique: true,
         lowercase: true,
-        match: /^\S+@\S+\.\S+$/
+        trim: true
     },
     password: {
         type: String,
@@ -36,31 +30,25 @@ const schema = {
         trim: true,
         select: false   // No select
     },
-    age: {
-        type: Number,
-        min: [13, 'Too young'],
-        max: 99,
-    },
-    phoneNumber: {
+    username: {
         type: String,
-        trim: true,
-        unique: true,
-        required: true
+        required: true,
+        minLength: 2,
+        maxlength: 128,
+        trim: true
     },
     role: {
         type: String,
         enum: roles,
         default: 'user'
     },
-    tokens: [{
-        token: {
-            type: String,
-            required: true
-        }
-    }]
-};
-
-const userSchema = new Schema(schema as SchemaDefinition, {
+    // tokens: [{
+    //     token: {
+    //         type: String,
+    //         required: true
+    //     }
+    // }]
+}, {
     toJSON: {
         virtuals: true
     },
@@ -70,14 +58,25 @@ const userSchema = new Schema(schema as SchemaDefinition, {
     timestamps: true
 });
 
-userSchema.pre('save', async function(next) {
+userSchema.pre<IUser>('save', async function(next: NextFunction) {
     // Hash the password before saving the user model
-    const user: any = this;
-    if (user.isModified('password')) {
-        user.password = await bcrypt.hash(user.password, salt);
+    const user = this;
+    try {
+        if (user.isModified('password')) {
+            user.password =  await bcryptHash(user.password);
+        }
+        next();
     }
-    next();
+    catch(error) {
+        // TODO: add error logging
+        return next(error);
+    }
 });
+
+userSchema.methods.comparePassword = async function(testPassword: string): Promise<boolean> {
+    const user: IUser = this;
+    return await bcryptCompare(testPassword, user.password);
+};
 
 userSchema.methods.generateAuthToken = async function() {
     // Generate an auth token for the user
@@ -88,17 +87,19 @@ userSchema.methods.generateAuthToken = async function() {
     return token;
 };
 
-userSchema.statics.findByCredentials = async (email: string, password: string) => {
-    // Search for a user by email and password.
-    const user: any = await User.findOne({ email});
-    if (!user) {
-        throw new Error('Invalid login credentials');
-    }
-    const isPasswordMatch = await bcrypt.compare(password, user.password);
-    if (!isPasswordMatch) {
-        throw new Error('Invalid login credentials');
-    }
-    return user;
-};
+// userSchema.statics.findByCredentials = async (email: string, password: string) => {
+//     // Search for a user by email and password.
+//     const user = await User.findOne({ email});
+//     if (!user) {
+//         throw new Error('Invalid login credentials');
+//     }
 
-export const User = mongoose.model('User', userSchema);
+
+//     const isPasswordMatch = await bcrypt.compare(password, user.password);
+//     if (!isPasswordMatch) {
+//         throw new Error('Invalid login credentials');
+//     }
+//     return user;
+// };
+
+export const User: Model<IUser> = model<IUser>('User', userSchema);
