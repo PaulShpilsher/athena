@@ -1,7 +1,10 @@
 import { NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-import { Document, Schema, Model, model } from 'mongoose';
+import { sign } from 'jsonwebtoken';
+import { Document, Schema, Model, model, Types } from 'mongoose';
 import { bcryptCompare, bcryptHash } from '../utils/bcrypt-helpers';
+import { jwtExpirationMinutes, jwtSecret } from '../settings';
+import { existy } from '../utils/general-helpers';
+import { ApiError } from '../utils/api-error';
 
 
 const roles = ['user', 'admin', 'guest'];
@@ -73,18 +76,59 @@ userSchema.pre<IUser>('save', async function(next: NextFunction) {
     }
 });
 
-userSchema.methods.comparePassword = async function(testPassword: string): Promise<boolean> {
-    const user: IUser = this;
-    return await bcryptCompare(testPassword, user.password);
-};
+export const createUserToken = (user: IUser): string => {
+    const notBefore = Math.floor(Date.now() / 1000);
+    const expiresIn = notBefore + (jwtExpirationMinutes * 60);
 
-userSchema.methods.generateAuthToken = async function() {
-    // Generate an auth token for the user
-    const user = this;
-    const token = jwt.sign({_id: user._id}, process.env.JWT_SECRET as string);
-    user.tokens = user.tokens.concat({token});
-    await user.save();
+    const token: string = sign({
+        username: user.username,
+        role: user.role
+    }, jwtSecret, {
+        algorithm: 'RS512',
+        expiresIn,
+        notBefore,
+        subject: user._id
+    });
     return token;
+}
+
+const matchUserPassword = async (user: IUser, password: string): Promise<boolean> => await bcryptCompare(password, user.password);
+
+userSchema.statics = {
+    roles,
+
+    async get(id: number): Promise<IUser> {
+        if (Types.ObjectId.isValid(id)) {
+            const user: IUser = await this.findById(id).exec();
+            if(existy(user)) {
+                return user;
+            }
+        }
+        throw new ApiError({
+            message: 'User does not exist',
+            status: httpStatus.NOT_FOUND
+        });
+    },
+
+    async findAndCheckPassword(email: string, password: string): Promise<{user: IUser, token: string}> {
+        if (!existy(email) || !existy(password)) {
+            throw new ApiError({
+                message: 'An email and password are required to generate a token',
+                status: httpStatus.BAD_REQUEST});
+        }
+
+        const user = await this.findOne({ email }).exec();
+        if(existy(user) && (await matchUserPassword(user, password))) {
+            return {
+                user,
+                token: user.token()
+            };
+        }
+        throw new ApiError({
+            message: 'Incorrect email or password',
+            status: httpStatus.UNAUTHORIZED,
+        });
+    }
 };
 
 // userSchema.statics.findByCredentials = async (email: string, password: string) => {
