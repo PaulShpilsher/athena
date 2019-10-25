@@ -15,7 +15,7 @@
   "license": "MIT",
   "private": true,
   "devDependencies": {
-    "@types/bcrypt-nodejs": "0.0.30",
+    "@types/bcryptjs": "^2.4.2",
     "@types/body-parser": "^1.17.1",
     "@types/compression": "^1.0.1",
     "@types/cors": "^2.8.6",
@@ -32,7 +32,7 @@
     "typescript": "^3.6.4"
   },
   "dependencies": {
-    "bcrypt-nodejs": "0.0.3",
+    "bcryptjs": "^2.4.3",
     "body-parser": "^1.19.0",
     "class-validator": "^0.10.2",
     "compression": "^1.7.4",

@@ -3,9 +3,11 @@ import compression from 'compression';
 import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
-import log4js, { Logger } from 'log4js';
+import { Logger, getLogger, connectLogger } from 'log4js';
 import mongoose from 'mongoose';
 import { logLevel, mongoUri, port } from './settings';
+import { userRouter } from './routes/user.routes';
+import { authRouter } from './routes/auth.routes';
 
 const mongoConnect = async (opt = {}) => await mongoose.connect(mongoUri, {
     ...opt,
@@ -17,11 +19,10 @@ const mongoConnect = async (opt = {}) => await mongoose.connect(mongoUri, {
     useFindAndModify: false
 });
 
-
 class Server {
     constructor() {
         this._app = express();
-        this._logger = log4js.getLogger();
+        this._logger = getLogger();
     }
 
     private readonly _app: express.Application;
@@ -30,11 +31,13 @@ class Server {
     start(): void {
         this._initMongo();
         this._initServer();
+        this._initRoutes();
+        this._app.listen(port, () => this._logger.info(`server started at http://localhost:${process.env.PORT}`));
     }
 
     private _initServer(): void {
         this._app
-            .use(log4js.connectLogger(this._logger, {
+            .use(connectLogger(this._logger, {
                 level: logLevel,
                 format: (req, res, format) => format(`:remote-addr :method :url ${JSON.stringify(req.body)}`)
             }))
@@ -44,8 +47,6 @@ class Server {
             .use(helmet())                              // secure apps by setting various HTTP headers
             .use(cors())                                // enable CORS - Cross Origin Resource Sharing
             .get('/', (_, response) => response.send('Welcome to Athena project'));
-
-        this._app.listen(port, () => this._logger.info(`server started at http://localhost:${process.env.PORT}`));
     }
 
     private _initMongo(): void {
@@ -71,6 +72,12 @@ class Server {
                 this._logger.error(error);
                 process.exit(-1);
             });
+    }
+
+    private _initRoutes(): void {
+        this._app
+            .use('/api/user', userRouter)
+            .use('/api/auth', authRouter);
     }
 }
 

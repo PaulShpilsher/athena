@@ -1,0 +1,22 @@
+docker volume create --name=mongodata
+
+docker run --name mongodb -v mongodata:/data/db -d -p 27017:27017 mongo
+
+
+winpty docker exec -it mongodb bash
+mongo
+
+-- create admin user
+use admin
+db.createUser({user: "sa", pwd: "secret", roles: [ "root" ]})
+
+docker run --name mongodb -v mongodata:/data/db -d -p 27017:27017 mongo --auth
+
+
+-- create athena user
+use athena
+db.createUser({user:"athenaUser", pwd:"secret", roles:[{role:"readWrite", db: "athena"}]})
+
+-- env
+MONGO_URI=mongodb://athenaUser:secret@localhost:27017/athena
+

@@ -1,8 +1,9 @@
 import dotenv from 'dotenv';
 import log4js from 'log4js';
 
-const err = (missingVariable: string ) => { throw new Error(`Missing environment variable ${missingVariable}`); }
+const err = (missingVariable: string ) => { throw new Error(`Missing environment variable ${missingVariable}`); };
 
+// load config into env
 dotenv.config();
 
 export const env: string = process.env.NODE_ENV || 'production';
@@ -17,7 +18,7 @@ if(!process.env.JWT_SECRET) {
     err('JWT_SECRET');
 }
 export const jwtSecret: string = process.env.JWT_SECRET as string;
-export const jwtExpirationMinutes: number = Number.parseInt(process.env.JWT_EXPIRATION_MINUTES || '20', 10);
+export const jwtExpirationSeconds: number = Number.parseInt(process.env.JWT_EXPIRATION_MINUTES || '20', 10) * 60;
 
 export const uploadLimitMb = 5;
 

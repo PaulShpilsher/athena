@@ -1,4 +1,6 @@
 
+import httpStatus from 'http-status';
+
 export class ApiError extends Error {
     constructor({message, status, stack}: {message: string, status?: number, stack?: string}) {
         super(message);

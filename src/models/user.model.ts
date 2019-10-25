@@ -1,20 +1,12 @@
 import { NextFunction } from 'express';
-import { sign } from 'jsonwebtoken';
-import { Document, Schema, Model, model, Types } from 'mongoose';
-import { bcryptCompare, bcryptHash } from '../utils/bcrypt-helpers';
-import { jwtExpirationMinutes, jwtSecret } from '../settings';
-import { existy } from '../utils/general-helpers';
-import { ApiError } from '../utils/api-error';
-
+import { Document, Schema, Model, model } from 'mongoose';
+import { User } from './user.interface';
+import { hash, hashSync } from 'bcryptjs';
+import { bcryptSalt } from '../settings';
 
 const roles = ['user', 'admin', 'guest'];
 
-export interface IUser extends Document {
-    email: string;
-    password: string;
-    username: string;
-    role: string;
-}
+export interface UserDocument extends User, Document {}
 
 const userSchema = new Schema({
     email: {
@@ -30,8 +22,7 @@ const userSchema = new Schema({
         required: true,
         minLength: 6,
         maxlength: 128,
-        trim: true,
-        select: false   // No select
+        trim: true
     },
     username: {
         type: String,
@@ -61,12 +52,12 @@ const userSchema = new Schema({
     timestamps: true
 });
 
-userSchema.pre<IUser>('save', async function(next: NextFunction) {
+userSchema.pre<UserDocument>('save', async function(next: NextFunction) {
     // Hash the password before saving the user model
     const user = this;
     try {
         if (user.isModified('password')) {
-            user.password =  await bcryptHash(user.password);
+            user.password = await hash(user.password, bcryptSalt);
         }
         next();
     }
@@ -76,60 +67,42 @@ userSchema.pre<IUser>('save', async function(next: NextFunction) {
     }
 });
 
-export const createUserToken = (user: IUser): string => {
-    const notBefore = Math.floor(Date.now() / 1000);
-    const expiresIn = notBefore + (jwtExpirationMinutes * 60);
+// userSchema.statics = {
+//     roles,
 
-    const token: string = sign({
-        username: user.username,
-        role: user.role
-    }, jwtSecret, {
-        algorithm: 'RS512',
-        expiresIn,
-        notBefore,
-        subject: user._id
-    });
-    return token;
-}
+//     async get(id: number): Promise<UserDocument> {
+//         if (Types.ObjectId.isValid(id)) {
+//             const user: UserDocument = await this.findById(id).exec();
+//             if(existy(user)) {
+//                 return user;
+//             }
+//         }
+//         throw new ApiError({
+//             message: 'User does not exist',
+//             status: httpStatus.NOT_FOUND
+//         });
+//     },
 
-const matchUserPassword = async (user: IUser, password: string): Promise<boolean> => await bcryptCompare(password, user.password);
+//     async findAndCheckPassword(email: string, password: string): Promise<{user: UserDocument, token: string}> {
+//         if (!existy(email) || !existy(password)) {
+//             throw new ApiError({
+//                 message: 'An email and password are required to generate a token',
+//                 status: httpStatus.BAD_REQUEST});
+//         }
 
-userSchema.statics = {
-    roles,
-
-    async get(id: number): Promise<IUser> {
-        if (Types.ObjectId.isValid(id)) {
-            const user: IUser = await this.findById(id).exec();
-            if(existy(user)) {
-                return user;
-            }
-        }
-        throw new ApiError({
-            message: 'User does not exist',
-            status: httpStatus.NOT_FOUND
-        });
-    },
-
-    async findAndCheckPassword(email: string, password: string): Promise<{user: IUser, token: string}> {
-        if (!existy(email) || !existy(password)) {
-            throw new ApiError({
-                message: 'An email and password are required to generate a token',
-                status: httpStatus.BAD_REQUEST});
-        }
-
-        const user = await this.findOne({ email }).exec();
-        if(existy(user) && (await matchUserPassword(user, password))) {
-            return {
-                user,
-                token: user.token()
-            };
-        }
-        throw new ApiError({
-            message: 'Incorrect email or password',
-            status: httpStatus.UNAUTHORIZED,
-        });
-    }
-};
+//         const user = await this.findOne({ email }).exec();
+//         if(existy(user) && (await bcryptCompare(user.password, password))) {
+//             return {
+//                 user,
+//                 token: user.token()
+//             };
+//         }
+//         throw new ApiError({
+//             message: 'Incorrect email or password',
+//             status: httpStatus.UNAUTHORIZED,
+//         });
+//     }
+//};
 
 // userSchema.statics.findByCredentials = async (email: string, password: string) => {
 //     // Search for a user by email and password.
@@ -138,7 +111,6 @@ userSchema.statics = {
 //         throw new Error('Invalid login credentials');
 //     }
 
-
 //     const isPasswordMatch = await bcrypt.compare(password, user.password);
 //     if (!isPasswordMatch) {
 //         throw new Error('Invalid login credentials');
@@ -146,4 +118,4 @@ userSchema.statics = {
 //     return user;
 // };
 
-export const User: Model<IUser> = model<IUser>('User', userSchema);
+export const UserModel: Model<UserDocument> = model<UserDocument>('User', userSchema);
