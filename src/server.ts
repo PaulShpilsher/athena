@@ -41,11 +41,14 @@ class Server {
                 level: logLevel,
                 format: (req, res, format) => format(`:remote-addr :method :url ${JSON.stringify(req.body)}`)
             }))
+
+            .use(helmet())                              // secure apps by setting various HTTP headers
+            .use(helmet.noCache())
+            .use(cors())                                // enable CORS - Cross Origin Resource Sharing
             .use(express.json())                        //
             .use(express.urlencoded({extended: false})) //
             .use(compression())                         // gzip compression
-            .use(helmet())                              // secure apps by setting various HTTP headers
-            .use(cors())                                // enable CORS - Cross Origin Resource Sharing
+
             .get('/', (_, response) => response.send('Welcome to Athena project'));
     }
 
