@@ -8,6 +8,7 @@ import mongoose from 'mongoose';
 import { logLevel, mongoUri, port } from './settings';
 import { userRouter } from './routes/user.routes';
 import { authRouter } from './routes/auth.routes';
+import { healthCheckRouter } from './routes/health-check.routes';
 
 const mongoConnect = async (opt = {}) => await mongoose.connect(mongoUri, {
     ...opt,
@@ -80,7 +81,8 @@ class Server {
     private _initRoutes(): void {
         this._app
             .use('/api/user', userRouter)
-            .use('/api/auth', authRouter);
+            .use('/api/auth', authRouter)
+            .use('/api/healthcheck', healthCheckRouter);
     }
 }
 
