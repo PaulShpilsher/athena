@@ -11,7 +11,7 @@ import { throwArgumentValidationFailed, existy, sendSuccess, sendError, throwApi
 // const logger: Logger = getLogger('AuthController');
 
 export abstract class AuthController {
-    static login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    static async login(req: Request, res: Response, next: NextFunction): Promise<void> {
         const { email, password }: { email: string, password: string } = req.body;
         if (!(email && password)) {
             throwArgumentValidationFailed();
@@ -34,7 +34,7 @@ export abstract class AuthController {
         next();
     }
 
-    static changePassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    static async changePassword(req: Request, res: Response, next: NextFunction): Promise<void> {
         const { oldPassword, newPassword }: { oldPassword: string, newPassword: string } = req.body;
         if (!(existy(oldPassword) && existy(newPassword))) {
             throwArgumentValidationFailed();

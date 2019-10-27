@@ -6,7 +6,7 @@ import { sendError, throwArgumentValidationFailed } from '../utils';
 const logger: Logger = getLogger('UserController');
 
 export abstract class UserController {
-    static registerUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    static async registerUser(req: Request, res: Response, next: NextFunction): Promise<void> {
         const { email, password, username, role } = req.body;
         if(!(email && password && username)) {
             throwArgumentValidationFailed();
