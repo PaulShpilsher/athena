@@ -1,0 +1,6 @@
+// docker volume create --name=redisdata
+
+// using config ~/dev/athena/redis/conf/redis.conf
+// container name is 'athenaredis'
+docker run -v ~/dev/athena/redis/conf/redis.conf:/usr/local/etc/redis/redis.conf -d --name athenaredis redis redis-server /usr/local/etc/redis/redis.conf
+
