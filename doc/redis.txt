@@ -2,5 +2,8 @@
 
 // using config ~/dev/athena/redis/conf/redis.conf
 // container name is 'athenaredis'
-docker run -v ~/dev/athena/redis/conf/redis.conf:/usr/local/etc/redis/redis.conf -d --name athenaredis redis redis-server /usr/local/etc/redis/redis.conf
+docker run -v ~/dev/athena/redis/conf/redis.conf:/usr/local/etc/redis/redis.conf -d -p 6379:6379 --name athenaredis redis redis-server /usr/local/etc/redis/redis.conf
+
+// using redisdata volume
+docker run -v redisdata:/data -d -p 6379:6379 --name athenaredis redis redis-server
 
