@@ -1,16 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
-import httpStatus from 'http-status';
+import { sendSuccess } from '../utils';
 
 export abstract class HealthCheckController {
-    static greeting = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-        try {
-            res.status(httpStatus.OK).send({
-                message: `Greetings from Athena`
-            });
-            next();
-        }
-        catch(err) {
-            next(err);
-        }
+    static greeting = (req: Request, res: Response, next: NextFunction): void => {
+        sendSuccess(res, 'Greetings from Athena');
+        next();
     }
 }

@@ -1,5 +1,6 @@
 import { Router } from 'express';
+import { asyncHandler } from '../utils';
 import { UserController } from '../controllers/user.controller';
 
 export const userRouter = Router()
-    .post('/register', UserController.registerUser);
+    .post('/register', asyncHandler(UserController.registerUser));

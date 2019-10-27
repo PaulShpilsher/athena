@@ -1,14 +1,16 @@
+import httpStatus from 'http-status';
+import { Logger, getLogger } from 'log4js';
 import { Request, Response, NextFunction } from 'express';
 import { Identity } from '../models/identity.interface';
 import { verifyAuthToken } from './auth-token';
-import { Logger, getLogger } from 'log4js';
-import httpStatus from 'http-status';
+import { asyncHandler, sendError } from '../utils';
 
-const logger: Logger = getLogger('AuthMiddleware');
+// const logger: Logger = getLogger('AuthMiddleware');
 
-export const checkAuth = async (req: Request, res: Response, next: NextFunction) => {
+export const checkAuth = asyncHandler(async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    let error;
     const authHeader = req.headers.authorization;
-    if(authHeader && authHeader.startsWith('Bearer ')) {
+    if(!!authHeader && authHeader.startsWith('Bearer ')) {
         const token: string = authHeader.substring(7, authHeader.length);
         try {
             const ident: Identity = await verifyAuthToken(token);
@@ -17,8 +19,8 @@ export const checkAuth = async (req: Request, res: Response, next: NextFunction)
             return;
         }
         catch(err) {
-            logger.error(`Token verification failed: ${err.message}`);
+            error = err;
         }
     }
-    res.status(httpStatus.UNAUTHORIZED).json({message: 'Unauthorized user'});
-};
+    sendError(res, httpStatus.UNAUTHORIZED, 'Unauthorized user', error);
+});
