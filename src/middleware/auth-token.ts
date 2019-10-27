@@ -7,7 +7,7 @@ export const makeAuthToken = async (identity: Identity): Promise<string> => new 
         issuer: 'athena',
         algorithm: 'HS512',
         encoding: 'utf8',
-        expiresIn: Math.floor(Date.now() / 1000) + jwtExpirationSeconds
+        expiresIn: jwtExpirationSeconds
     }, (err: Error, encoded: string) => !err ? resolve(encoded) : reject(err)));
 
 export const verifyAuthToken = async (token: string): Promise<Identity> => new Promise((resolve, reject) =>
