@@ -9,6 +9,7 @@ import { logLevel, mongoUri, port } from './settings';
 import { userRouter } from './routes/user.routes';
 import { authRouter } from './routes/auth.routes';
 import { healthCheckRouter } from './routes/health-check.routes';
+import bodyParser from 'body-parser';
 
 const mongoConnect = async (opt = {}) => await mongoose.connect(mongoUri, {
     ...opt,
@@ -47,6 +48,7 @@ class Server {
             .use(helmet.noCache())
             .use(cors())                                // enable CORS - Cross Origin Resource Sharing
             .use(express.json())                        //
+            .use(bodyParser.json())
             .use(express.urlencoded({extended: false})) //
             .use(compression())                         // gzip compression
 
@@ -76,6 +78,10 @@ class Server {
                 this._logger.error(error);
                 process.exit(-1);
             });
+    }
+
+    private _initRedis(): void {
+
     }
 
     private _initRoutes(): void {
